@@ -1,0 +1,76 @@
+buildscript {
+    ext.kotlin_version = '1.2.71'
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+plugins {
+    id 'java'
+}
+
+group 'de.handler.backend'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+apply plugin: 'java'
+apply plugin: 'kotlin'
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven { url "http://dl.bintray.com/kotlin/ktor" }
+    maven { url "https://dl.bintray.com/kotlin/kotlinx" }
+    maven { url "https://dl.bintray.com/pgutkowski/Maven" }
+    maven { url "https://dl.bintray.com/kotlin/squash" }
+}
+
+ext {
+    ktor_version = '0.9.5'
+    logback_version = '1.2.3'
+    fuel_version = '1.12.1'
+    kgraphql_version = '0.2.8'
+    koin_version = '1.0.0'
+    squash_version = '0.2.4'
+}
+
+dependencies {
+    // Kotlin
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-runtime:$kotlin_version"
+
+    // Ktor Server
+    compile "io.ktor:ktor-server-core:$ktor_version"
+    compile "io.ktor:ktor-server-netty:$ktor_version"
+    compile "io.ktor:ktor-gson:$ktor_version"
+    compile "io.ktor:ktor-locations:$ktor_version"
+
+    // Logging
+    compile "ch.qos.logback:logback-classic:$logback_version"
+
+    // Networking
+    compile "com.github.kittinunf.fuel:fuel:$fuel_version"
+
+    // GraphQL
+    compile "com.github.pgutkowski:kgraphql:$kgraphql_version"
+
+    // Dependency Injection
+    compile "org.koin:koin-ktor:$koin_version"
+
+    // Database
+    compile "org.jetbrains.squash:squash-h2:$squash_version"
+
+    // Testing
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+kotlin {
+    experimental {
+        coroutines "enable"
+    }
+}

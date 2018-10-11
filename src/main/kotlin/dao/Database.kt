@@ -1,0 +1,115 @@
+package dao
+
+import model.GuerillaProse
+import model.User
+import org.jetbrains.squash.connection.DatabaseConnection
+import org.jetbrains.squash.connection.transaction
+import org.jetbrains.squash.dialects.h2.H2Connection
+import org.jetbrains.squash.expressions.eq
+import org.jetbrains.squash.query.from
+import org.jetbrains.squash.query.orderBy
+import org.jetbrains.squash.query.select
+import org.jetbrains.squash.query.where
+import org.jetbrains.squash.results.ResultRow
+import org.jetbrains.squash.results.get
+import org.jetbrains.squash.schema.create
+import org.jetbrains.squash.statements.fetch
+import org.jetbrains.squash.statements.insertInto
+import org.jetbrains.squash.statements.values
+import java.time.LocalDate
+
+fun ResultRow.toUser() = User(
+        id = this[UserDao.id],
+        firstname = this[UserDao.firstname],
+        lastname = this[UserDao.lastname],
+        email = this[UserDao.email]
+)
+
+fun ResultRow.toGuerillaProse() = GuerillaProse(
+        id = this[GuerillaProseDao.id],
+        text = this[GuerillaProseDao.text],
+        imageUrl = this[GuerillaProseDao.imageUrl],
+        label = this[GuerillaProseDao.label],
+        date = this[GuerillaProseDao.date],
+        userId = this[GuerillaProseDao.userId]
+)
+
+class Database(val db: DatabaseConnection = H2Connection.createMemoryConnection(catalogue = "DB_CLOSE_DELAY=-1")) : GuerillaProseStorage {
+
+    init {
+        db.transaction {
+            databaseSchema().create(GuerillaProseDao, UserDao)
+        }
+    }
+
+    override fun createGuerillaProse(guerillaProse: GuerillaProse): GuerillaProse {
+        val id = db.transaction {
+            insertInto(GuerillaProseDao).values {
+                it[text] = guerillaProse.text
+                it[imageUrl] = guerillaProse.imageUrl
+                it[label] = guerillaProse.label
+                it[userId] = guerillaProse.userId
+                it[date] = LocalDate.now()
+            }.fetch(GuerillaProseDao.id).execute()
+        }
+
+        guerillaProse.id = id
+        return guerillaProse
+    }
+
+    override fun getGuerillaProses(): List<GuerillaProse> = db.transaction {
+        from(GuerillaProseDao)
+                .select()
+                .orderBy(GuerillaProseDao.date, ascending = true)
+                .execute()
+                .map { it.toGuerillaProse() }
+                .toList()
+    }
+
+    override fun getGuerillaProsesForLabel(label: String): List<GuerillaProse> = db.transaction {
+        from(GuerillaProseDao)
+                .select()
+                .where(GuerillaProseDao.label eq label)
+                .orderBy(GuerillaProseDao.date, ascending = true)
+                .execute()
+                .map { it.toGuerillaProse() }
+                .toList()
+    }
+
+    override fun getGuerillaProsesForUser(userId: Int): List<GuerillaProse> = db.transaction {
+        from(GuerillaProseDao)
+                .select()
+                .where(GuerillaProseDao.userId eq userId)
+                .orderBy(GuerillaProseDao.date, ascending = true)
+                .execute()
+                .map { it.toGuerillaProse() }
+                .toList()
+    }
+
+    override fun getGuerillaProse(id: Int): GuerillaProse? = db.transaction {
+        val row = from(GuerillaProseDao).where { GuerillaProseDao.id eq id }.execute().singleOrNull()
+        row?.toGuerillaProse()
+    }
+
+    override fun createUser(user: User): User {
+        val id = db.transaction {
+            insertInto(UserDao).values {
+                it[firstname] = user.firstname
+                it[lastname] = user.lastname
+                it[email] = user.email
+            }.fetch(GuerillaProseDao.id).execute()
+        }
+
+        user.id = id
+        return user
+    }
+
+    override fun getUser(userId: Int): User? = db.transaction {
+        val row = from(UserDao).where { UserDao.id eq userId }.execute().singleOrNull()
+        row?.toUser()
+    }
+
+    override fun close() {
+        db.close()
+    }
+}
