@@ -53,12 +53,6 @@ dependencies {
     // Logging
     compile "ch.qos.logback:logback-classic:$logback_version"
 
-    // Networking
-    compile "com.github.kittinunf.fuel:fuel:$fuel_version"
-
-    // GraphQL
-    compile "com.github.pgutkowski:kgraphql:$kgraphql_version"
-
     // Dependency Injection
     compile "org.koin:koin-ktor:$koin_version"
 
