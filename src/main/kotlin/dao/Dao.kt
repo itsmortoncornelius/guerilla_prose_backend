@@ -1,15 +1,14 @@
 package dao
 
-import model.User
 import org.jetbrains.squash.definition.*
 
 object GuerillaProseDao : TableDefinition() {
     val id = integer("id").autoIncrement().primaryKey()
     val text = varchar("text", length = 333)
-    val imageUrl = varchar("imageUrl", 64)
-    val label = varchar("label", 64)
+    val imageUrl = varchar("imageUrl", 255)
+    val label = varchar("label", 128)
     val userId = reference(UserDao.id, "userId")
-    val date = date("date")
+    val date = long("date")
 }
 
 object UserDao : TableDefinition() {

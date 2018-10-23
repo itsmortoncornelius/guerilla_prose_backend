@@ -16,7 +16,7 @@ import org.jetbrains.squash.schema.create
 import org.jetbrains.squash.statements.fetch
 import org.jetbrains.squash.statements.insertInto
 import org.jetbrains.squash.statements.values
-import java.time.LocalDate
+import java.sql.Timestamp
 
 fun ResultRow.toUser() = User(
         id = this[UserDao.id],
@@ -34,7 +34,7 @@ fun ResultRow.toGuerillaProse() = GuerillaProse(
         userId = this[GuerillaProseDao.userId]
 )
 
-class Database(val db: DatabaseConnection = H2Connection.createMemoryConnection(catalogue = "DB_CLOSE_DELAY=-1")) : GuerillaProseStorage {
+class Database(val db: DatabaseConnection = H2Connection.createMemoryConnection(catalogue = "DB_CLOSE_DELAY=-1")) : Storage {
 
     init {
         db.transaction {
@@ -45,11 +45,11 @@ class Database(val db: DatabaseConnection = H2Connection.createMemoryConnection(
     override fun createGuerillaProse(guerillaProse: GuerillaProse): GuerillaProse {
         val id = db.transaction {
             insertInto(GuerillaProseDao).values {
-                it[text] = guerillaProse.text
-                it[imageUrl] = guerillaProse.imageUrl
-                it[label] = guerillaProse.label
-                it[userId] = guerillaProse.userId
-                it[date] = LocalDate.now()
+                it[text] = guerillaProse.text?.let { text -> text }
+                it[imageUrl] = guerillaProse.imageUrl?.let { imageUrl -> imageUrl }
+                it[label] = guerillaProse.label?.let { label -> label }
+                it[userId] = guerillaProse.userId?.let { userId -> userId }
+                it[date] = Timestamp(System.currentTimeMillis()).time
             }.fetch(GuerillaProseDao.id).execute()
         }
 

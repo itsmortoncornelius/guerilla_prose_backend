@@ -1,7 +1,7 @@
 package backend
 
 import com.google.gson.Gson
-import dao.GuerillaProseStorage
+import dao.Storage
 import di.DependencyProvider
 import io.ktor.application.call
 import io.ktor.application.install
@@ -11,7 +11,6 @@ import io.ktor.features.DefaultHeaders
 import io.ktor.gson.gson
 import io.ktor.http.ContentType
 import io.ktor.locations.Locations
-import io.ktor.locations.get
 import io.ktor.request.receive
 import io.ktor.response.respondText
 import io.ktor.routing.get
@@ -20,15 +19,13 @@ import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import model.GuerillaProse
+import model.User
 import org.koin.core.Koin
 import org.koin.ktor.ext.inject
 import org.koin.log.PrintLogger
 import org.koin.standalone.StandAloneContext.startKoin
 
 class GuerillaProseApp {
-    fun main(args: Array<String>) {
-
-    }
     companion object {
         fun main() {
             Koin.logger = PrintLogger()
@@ -45,7 +42,7 @@ class GuerillaProseApp {
                 }
 
                 routing {
-                    val storage: GuerillaProseStorage by inject()
+                    val storage: Storage by inject()
                     val gson: Gson by inject()
 
                     get("/guerillaProse") {
@@ -54,7 +51,7 @@ class GuerillaProseApp {
                             val jsonResponse = gson.toJson(guerillaProseList)
                             call.respondText(jsonResponse, ContentType.Application.Json)
                         } catch (e: Exception) {
-                            call.respondText(gson.toJson("error while getting data"))
+                            call.respondText(gson.toJson("error while getting guerilla prose data"))
                         }
                     }
 
@@ -65,7 +62,7 @@ class GuerillaProseApp {
                             val jsonResponse = gson.toJson(guerillaProse)
                             call.respondText(jsonResponse, ContentType.Application.Json)
                         } catch (e: Exception) {
-                            call.respondText(gson.toJson("error while getting data"))
+                            call.respondText(gson.toJson("error while getting guerilla prose data"))
                         }
                     }
 
@@ -76,7 +73,29 @@ class GuerillaProseApp {
                             val jsonResponse = gson.toJson(guerillaProse)
                             call.respondText(jsonResponse, ContentType.Application.Json)
                         } catch (e: Exception) {
-                            call.respondText(gson.toJson("error while saving data"))
+                            call.respondText(gson.toJson("error while saving guerilla prose data"))
+                        }
+                    }
+
+                    get("/user/{id}") {
+                        try {
+                            val userId = call.parameters["id"]?.toInt()
+                            val user = userId?.let { id -> storage.getUser(id) }
+                            val jsonResponse = gson.toJson(user)
+                            call.respondText(jsonResponse, ContentType.Application.Json)
+                        } catch (e: Exception) {
+                            call.respondText(gson.toJson("error while getting user data"))
+                        }
+                    }
+
+                    post("/user") {
+                        try {
+                            val user = call.receive<User>()
+                            storage.createUser(user)
+                            val jsonResponse = gson.toJson(user)
+                            call.respondText(jsonResponse, ContentType.Application.Json)
+                        } catch (e: Exception) {
+                            call.respondText(gson.toJson("error while saving user data"))
                         }
                     }
                 }

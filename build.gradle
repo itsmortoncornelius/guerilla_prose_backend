@@ -30,37 +30,28 @@ repositories {
     maven { url "https://dl.bintray.com/kotlin/squash" }
 }
 
-ext {
-    ktor_version = '0.9.5'
-    logback_version = '1.2.3'
-    fuel_version = '1.12.1'
-    kgraphql_version = '0.2.8'
-    koin_version = '1.0.0'
-    squash_version = '0.2.4'
-}
-
 dependencies {
     // Kotlin
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-    compile "org.jetbrains.kotlin:kotlin-runtime:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-runtime:$kotlin_version"
 
     // Ktor Server
-    compile "io.ktor:ktor-server-core:$ktor_version"
-    compile "io.ktor:ktor-server-netty:$ktor_version"
-    compile "io.ktor:ktor-gson:$ktor_version"
-    compile "io.ktor:ktor-locations:$ktor_version"
+    implementation "io.ktor:ktor-server-core:0.9.5"
+    implementation "io.ktor:ktor-server-netty:0.9.5"
+    implementation "io.ktor:ktor-gson:0.9.5"
+    implementation "io.ktor:ktor-locations:0.9.5"
 
     // Logging
-    compile "ch.qos.logback:logback-classic:$logback_version"
+    implementation "ch.qos.logback:logback-classic:1.2.3"
 
     // Dependency Injection
-    compile "org.koin:koin-ktor:$koin_version"
+    implementation "org.koin:koin-ktor:1.0.0"
 
     // Database
-    compile "org.jetbrains.squash:squash-h2:$squash_version"
+    implementation "org.jetbrains.squash:squash-h2:0.2.4"
 
     // Testing
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    implementation group: 'junit', name: 'junit', version: '4.12'
 }
 
 kotlin {

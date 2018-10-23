@@ -1,12 +1,12 @@
 package model
 
-import java.time.LocalDate
+import java.util.*
 
 data class GuerillaProse(
-        var id: Int,
+        var id: Int?,
         val text: String?,
         val imageUrl: String?,
-        val label: String,
-        val userId: Int,
-        val date: LocalDate
+        val label: String?,
+        val userId: Int?,
+        val date: Long?
 )

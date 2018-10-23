@@ -4,7 +4,7 @@ import model.GuerillaProse
 import model.User
 import java.io.Closeable
 
-interface GuerillaProseStorage: Closeable {
+interface Storage: Closeable {
     fun createGuerillaProse(guerillaProse: GuerillaProse): GuerillaProse
     fun getGuerillaProses(): List<GuerillaProse>
     fun getGuerillaProsesForLabel(label: String): List<GuerillaProse>
