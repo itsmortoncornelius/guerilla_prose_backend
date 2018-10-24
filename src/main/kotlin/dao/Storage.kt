@@ -13,4 +13,5 @@ interface Storage: Closeable {
 
     fun createUser(user: User): User
     fun getUser(userId: Int): User?
+    fun getUser(email: String): User?
 }

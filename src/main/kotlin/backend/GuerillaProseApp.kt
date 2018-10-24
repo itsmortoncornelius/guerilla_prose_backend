@@ -91,6 +91,14 @@ class GuerillaProseApp {
                     post("/user") {
                         try {
                             val user = call.receive<User>()
+                            if (user.email?.isNotBlank() == true) {
+                                val existingUser = storage.getUser(user.email)
+                                if (existingUser != null) {
+                                    val jsonResponse = gson.toJson(existingUser)
+                                    call.respondText(jsonResponse, ContentType.Application.Json)
+                                    return@post
+                                }
+                            }
                             storage.createUser(user)
                             val jsonResponse = gson.toJson(user)
                             call.respondText(jsonResponse, ContentType.Application.Json)

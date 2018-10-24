@@ -109,6 +109,11 @@ class Database(val db: DatabaseConnection = H2Connection.createMemoryConnection(
         row?.toUser()
     }
 
+    override fun getUser(email: String): User? = db.transaction {
+        val row = from(UserDao).where { UserDao.email eq email }.execute().singleOrNull()
+        row?.toUser()
+    }
+
     override fun close() {
         db.close()
     }
