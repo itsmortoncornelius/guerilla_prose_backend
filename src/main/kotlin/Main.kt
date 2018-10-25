@@ -1,8 +1,6 @@
 import com.google.gson.Gson
 import dao.Storage
 import di.DependencyProvider
-import model.GuerillaProse
-import model.User
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.CallLogging
@@ -10,14 +8,18 @@ import io.ktor.features.ContentNegotiation
 import io.ktor.features.DefaultHeaders
 import io.ktor.gson.gson
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.locations.Locations
 import io.ktor.request.receive
+import io.ktor.response.respond
 import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import model.GuerillaProse
+import model.User
 import org.koin.core.Koin
 import org.koin.ktor.ext.inject
 import org.koin.log.PrintLogger
@@ -44,10 +46,9 @@ fun main(args: Array<String>) {
             get("/guerillaProse") {
                 try {
                     val guerillaProseList = storage.getGuerillaProses()
-                    val jsonResponse = gson.toJson(guerillaProseList)
-                    call.respondText(jsonResponse, ContentType.Application.Json)
+                    call.respond(HttpStatusCode.OK, guerillaProseList)
                 } catch (e: Exception) {
-                    call.respondText(gson.toJson("error while getting guerilla prose data"))
+                    call.respond(HttpStatusCode.InternalServerError, "error while getting guerilla prose data")
                 }
             }
 
@@ -55,21 +56,23 @@ fun main(args: Array<String>) {
                 try {
                     val guerillaProseId = call.parameters["id"]?.toInt()
                     val guerillaProse = guerillaProseId?.let { id -> storage.getGuerillaProse(id) }
-                    val jsonResponse = gson.toJson(guerillaProse)
-                    call.respondText(jsonResponse, ContentType.Application.Json)
+                    if (guerillaProse != null) {
+                        call.respond(HttpStatusCode.OK, guerillaProse)
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, "The resource cannot be found in the database. Make sure you sent the correct id")
+                    }
                 } catch (e: Exception) {
-                    call.respondText(gson.toJson("error while getting guerilla prose data"))
+                    call.respond(HttpStatusCode.InternalServerError, "error while getting guerilla prose data")
                 }
             }
 
             post("/guerillaProse") {
                 try {
                     val guerillaProse = call.receive<GuerillaProse>()
-                    storage.createGuerillaProse(guerillaProse)
-                    val jsonResponse = gson.toJson(guerillaProse)
-                    call.respondText(jsonResponse, ContentType.Application.Json)
+                    val createdGuerillaProse = storage.createGuerillaProse(guerillaProse)
+                    call.respond(HttpStatusCode.OK, createdGuerillaProse)
                 } catch (e: Exception) {
-                    call.respondText(gson.toJson("error while saving guerilla prose data"))
+                    call.respond(HttpStatusCode.InternalServerError, "error while saving guerilla prose data")
                 }
             }
 
@@ -77,10 +80,13 @@ fun main(args: Array<String>) {
                 try {
                     val userId = call.parameters["id"]?.toInt()
                     val user = userId?.let { id -> storage.getUser(id) }
-                    val jsonResponse = gson.toJson(user)
-                    call.respondText(jsonResponse, ContentType.Application.Json)
+                    if (user != null) {
+                        call.respond(HttpStatusCode.OK, user)
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, "The resource cannot be found in the database. Make sure you sent the correct id")
+                    }
                 } catch (e: Exception) {
-                    call.respondText(gson.toJson("error while getting user data"))
+                    call.respond(HttpStatusCode.InternalServerError, "error while getting user data")
                 }
             }
 
@@ -90,16 +96,14 @@ fun main(args: Array<String>) {
                     if (user.email?.isNotBlank() == true) {
                         val existingUser = storage.getUser(user.email)
                         if (existingUser != null) {
-                            val jsonResponse = gson.toJson(existingUser)
-                            call.respondText(jsonResponse, ContentType.Application.Json)
+                            call.respond(HttpStatusCode.Conflict, existingUser)
                             return@post
                         }
                     }
                     storage.createUser(user)
-                    val jsonResponse = gson.toJson(user)
-                    call.respondText(jsonResponse, ContentType.Application.Json)
+                    call.respond(HttpStatusCode.OK, user)
                 } catch (e: Exception) {
-                    call.respondText(gson.toJson("error while saving user data"))
+                    call.respond(HttpStatusCode.InternalServerError, "error while saving user data")
                 }
             }
         }
