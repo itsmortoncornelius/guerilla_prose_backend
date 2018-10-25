@@ -1,3 +1,6 @@
+group 'de.handler.backend'
+version '1.0-SNAPSHOT'
+
 buildscript {
     ext.kotlin_version = '1.2.71'
 
@@ -9,24 +12,20 @@ buildscript {
     }
 }
 
-plugins {
-    id 'java'
-}
-
-group 'de.handler.backend'
-version '1.0-SNAPSHOT'
-
-sourceCompatibility = 1.8
-
 apply plugin: 'java'
 apply plugin: 'kotlin'
+apply plugin: 'application'
+
+mainClassName = 'de.handler.GuerillaProseApp'
+
+targetCompatibility = 1.8
+sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
     jcenter()
     maven { url "http://dl.bintray.com/kotlin/ktor" }
     maven { url "https://dl.bintray.com/kotlin/kotlinx" }
-    maven { url "https://dl.bintray.com/pgutkowski/Maven" }
     maven { url "https://dl.bintray.com/kotlin/squash" }
 }
 
@@ -58,4 +57,12 @@ kotlin {
     experimental {
         coroutines "enable"
     }
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
 }

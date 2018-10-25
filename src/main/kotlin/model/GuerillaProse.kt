@@ -1,7 +1,5 @@
 package model
 
-import java.util.*
-
 data class GuerillaProse(
         var id: Int?,
         val text: String?,
