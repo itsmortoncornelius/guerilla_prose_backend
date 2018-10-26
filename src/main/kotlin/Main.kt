@@ -155,6 +155,10 @@ fun main(args: Array<String>) {
                     call.respond(HttpStatusCode.InternalServerError, "The file could not be correctly stored on the server")
                 }
             }
+
+            static("files") {
+                files("files")
+            }
         }
     }
     server.start(wait = true)
