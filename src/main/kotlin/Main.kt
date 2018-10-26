@@ -52,7 +52,7 @@ fun main(args: Array<String>) {
                 }
             }
 
-            get("/guerillaProse/{id}") {
+            get("/guerillaProse") {
                 try {
                     val guerillaProseId = call.parameters["id"]?.toInt()
                     val guerillaProse = guerillaProseId?.let { id -> storage.getGuerillaProse(id) }
@@ -76,7 +76,7 @@ fun main(args: Array<String>) {
                 }
             }
 
-            get("/user/{id}") {
+            get("/user") {
                 try {
                     val userId = call.parameters["id"]?.toInt()
                     val user = userId?.let { id -> storage.getUser(id) }
@@ -100,8 +100,8 @@ fun main(args: Array<String>) {
                             return@post
                         }
                     }
-                    storage.createUser(user)
-                    call.respond(HttpStatusCode.OK, user)
+                    val createdUser = storage.createUser(user)
+                    call.respond(HttpStatusCode.OK, createdUser)
                 } catch (e: Exception) {
                     call.respond(HttpStatusCode.InternalServerError, "error while saving user data")
                 }
