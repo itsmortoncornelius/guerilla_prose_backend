@@ -7,24 +7,19 @@ import io.ktor.features.CallLogging
 import io.ktor.features.ContentNegotiation
 import io.ktor.features.DefaultHeaders
 import io.ktor.gson.gson
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.*
 import io.ktor.locations.Locations
-import io.ktor.network.util.ioCoroutineDispatcher
-import io.ktor.request.isMultipart
 import io.ktor.request.receive
 import io.ktor.request.receiveMultipart
 import io.ktor.response.respond
-import io.ktor.response.respondText
-import io.ktor.response.respondTextWriter
-import io.ktor.response.respondWrite
-import io.ktor.routing.get
-import io.ktor.routing.post
-import io.ktor.routing.routing
+import io.ktor.routing.*
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import model.FileInfo
 import model.GuerillaProse
 import model.User
@@ -33,7 +28,6 @@ import org.koin.ktor.ext.inject
 import org.koin.log.PrintLogger
 import org.koin.standalone.StandAloneContext.startKoin
 import java.io.File
-import java.io.FileInputStream
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -55,67 +49,102 @@ fun main(args: Array<String>) {
             val storage: Storage by inject()
             val gson: Gson by inject()
 
-            get("/guerillaProse") {
-                try {
-                    val guerillaProseList = storage.getGuerillaProses()
-                    call.respond(HttpStatusCode.OK, guerillaProseList)
-                } catch (e: Exception) {
-                    call.respond(HttpStatusCode.InternalServerError, "error while getting guerilla prose data")
-                }
-            }
+            route("/guerillaProse") {
 
-            get("/guerillaProse/{id}") {
-                try {
-                    val guerillaProseId = call.parameters["id"]?.toInt()
-                    val guerillaProse = guerillaProseId?.let { id -> storage.getGuerillaProse(id) }
-                    if (guerillaProse != null) {
-                        call.respond(HttpStatusCode.OK, guerillaProse)
-                    } else {
-                        call.respond(HttpStatusCode.NotFound, "The resource cannot be found in the database. Make sure you sent the correct id")
+                get {
+                    try {
+                        val guerillaProseList = storage.getGuerillaProses()
+                        call.respond(HttpStatusCode.OK, guerillaProseList)
+                    } catch (e: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError, "error while getting guerilla prose data")
                     }
-                } catch (e: Exception) {
-                    call.respond(HttpStatusCode.InternalServerError, "error while getting guerilla prose data")
                 }
-            }
 
-            post("/guerillaProse") {
-                try {
-                    val guerillaProse = call.receive<GuerillaProse>()
-                    val createdGuerillaProse = storage.createGuerillaProse(guerillaProse)
-                    call.respond(HttpStatusCode.OK, createdGuerillaProse)
-                } catch (e: Exception) {
-                    call.respond(HttpStatusCode.InternalServerError, "error while saving guerilla prose data")
-                }
-            }
-
-            get("/user") {
-                try {
-                    val userId = call.parameters["id"]?.toInt()
-                    val user = userId?.let { id -> storage.getUser(id) }
-                    if (user != null) {
-                        call.respond(HttpStatusCode.OK, user)
-                    } else {
-                        call.respond(HttpStatusCode.NotFound, "The resource cannot be found in the database. Make sure you sent the correct id")
-                    }
-                } catch (e: Exception) {
-                    call.respond(HttpStatusCode.InternalServerError, "error while getting user data")
-                }
-            }
-
-            post("/user") {
-                try {
-                    val user = call.receive<User>()
-                    if (user.email?.isNotBlank() == true) {
-                        val existingUser = storage.getUser(user.email)
-                        if (existingUser != null) {
-                            call.respond(HttpStatusCode.Conflict, existingUser)
-                            return@post
+                get("/{id}") {
+                    try {
+                        val guerillaProseId = call.parameters["id"]?.toInt()
+                        val guerillaProse = guerillaProseId?.let { id -> storage.getGuerillaProse(id) }
+                        if (guerillaProse != null) {
+                            call.respond(HttpStatusCode.OK, guerillaProse)
+                        } else {
+                            call.respond(HttpStatusCode.NotFound, "The resource cannot be found in the database. Make sure you sent the correct id")
                         }
+                    } catch (e: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError, "error while getting guerilla prose data")
                     }
-                    val createdUser = storage.createUser(user)
-                    call.respond(HttpStatusCode.OK, createdUser)
-                } catch (e: Exception) {
-                    call.respond(HttpStatusCode.InternalServerError, "error while saving user data")
+                }
+
+                post {
+                    try {
+                        val guerillaProse = call.receive<GuerillaProse>()
+                        val createdGuerillaProse = storage.createGuerillaProse(guerillaProse)
+                        call.respond(HttpStatusCode.OK, createdGuerillaProse)
+                    } catch (e: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError, "error while saving guerilla prose data")
+                    }
+                }
+            }
+
+            route("/user") {
+
+                get {
+                    try {
+                        val userId = call.parameters["id"]?.toInt()
+                        val user = userId?.let { id -> storage.getUser(id) }
+                        if (user != null) {
+                            call.respond(HttpStatusCode.OK, user)
+                        } else {
+                            call.respond(HttpStatusCode.NotFound, "The resource cannot be found in the database. Make sure you sent the correct id")
+                        }
+                    } catch (e: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError, "error while getting user data")
+                    }
+                }
+
+                post {
+                    try {
+                        val user = call.receive<User>()
+                        if (user.email?.isNotBlank() == true) {
+                            val existingUser = storage.getUser(user.email)
+                            if (existingUser != null) {
+                                call.respond(HttpStatusCode.Conflict, existingUser)
+                                return@post
+                            }
+                        }
+                        val createdUser = storage.createUser(user)
+                        call.respond(HttpStatusCode.OK, createdUser)
+                    } catch (e: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError, "error while saving user data")
+                    }
+                }
+
+                put {
+                    try {
+                        val user = call.receive<User>()
+                        storage.updateUser(user)
+                        call.respond(HttpStatusCode.OK, user)
+                    } catch (e: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError, "error while saving user data")
+                    }
+                }
+
+                delete {
+                    try {
+                        val userId = call.parameters["id"]?.toInt()
+                        if (userId != null) {
+                            val user = storage.getUser(userId)
+                            storage.deleteUser(userId)
+                            if (user != null) {
+                                call.respond(HttpStatusCode.OK, user)
+                            } else {
+                                call.respond(HttpStatusCode.NotFound, "the user was not found and could not be deleted")
+                            }
+                        } else {
+                            call.respond(HttpStatusCode.InternalServerError, "did you set the correct parameter for Id?. It should be like user?id={id}")
+                        }
+                    } catch (e: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError, "error while saving user data")
+                    }
                 }
             }
 

@@ -6,16 +6,12 @@ import org.jetbrains.squash.connection.DatabaseConnection
 import org.jetbrains.squash.connection.transaction
 import org.jetbrains.squash.dialects.h2.H2Connection
 import org.jetbrains.squash.expressions.eq
-import org.jetbrains.squash.query.from
-import org.jetbrains.squash.query.orderBy
-import org.jetbrains.squash.query.select
-import org.jetbrains.squash.query.where
+import org.jetbrains.squash.graph.id
+import org.jetbrains.squash.query.*
 import org.jetbrains.squash.results.ResultRow
 import org.jetbrains.squash.results.get
 import org.jetbrains.squash.schema.create
-import org.jetbrains.squash.statements.fetch
-import org.jetbrains.squash.statements.insertInto
-import org.jetbrains.squash.statements.values
+import org.jetbrains.squash.statements.*
 import java.sql.Timestamp
 
 fun ResultRow.toUser() = User(
@@ -97,7 +93,7 @@ class Database(val db: DatabaseConnection = H2Connection.createMemoryConnection(
                 it[firstname] = user.firstname
                 it[lastname] = user.lastname
                 it[email] = user.email
-            }.fetch(GuerillaProseDao.id).execute()
+            }.fetch(UserDao.id).execute()
         }
 
         user.id = id
@@ -112,6 +108,14 @@ class Database(val db: DatabaseConnection = H2Connection.createMemoryConnection(
     override fun getUser(email: String): User? = db.transaction {
         val row = from(UserDao).where { UserDao.email eq email }.execute().singleOrNull()
         row?.toUser()
+    }
+
+    override fun updateUser(user: User) = db.transaction {
+        update(UserDao).where { UserDao.id eq user.id!! }.execute()
+    }
+
+    override fun deleteUser(id: Int) = db.transaction {
+        deleteFrom(UserDao).where { UserDao.id eq id }.execute()
     }
 
     override fun close() {
