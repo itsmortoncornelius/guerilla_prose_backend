@@ -6,7 +6,6 @@ import org.jetbrains.squash.connection.DatabaseConnection
 import org.jetbrains.squash.connection.transaction
 import org.jetbrains.squash.dialects.h2.H2Connection
 import org.jetbrains.squash.expressions.eq
-import org.jetbrains.squash.graph.id
 import org.jetbrains.squash.query.*
 import org.jetbrains.squash.results.ResultRow
 import org.jetbrains.squash.results.get
@@ -111,7 +110,13 @@ class Database(val db: DatabaseConnection = H2Connection.createMemoryConnection(
     }
 
     override fun updateUser(user: User) = db.transaction {
-        update(UserDao).where { UserDao.id eq user.id!! }.execute()
+        update(UserDao).where { UserDao.id eq user.id!! }.set {
+            it[firstname] = user.firstname
+            it[lastname] = user.lastname
+            it[email] = user.email
+        }.execute()
+
+        return@transaction user
     }
 
     override fun deleteUser(id: Int) = db.transaction {
