@@ -1,6 +1,4 @@
-import com.google.gson.Gson
 import dao.Storage
-import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.CallLogging
@@ -28,6 +26,10 @@ import org.koin.ktor.ext.inject
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
+import java.text.DateFormat.FULL
+import java.time.LocalDateTime
+import java.time.format.TextStyle
+import java.util.*
 
 object Server {
     fun build(): NettyApplicationEngine {
@@ -99,14 +101,24 @@ object Server {
                     post {
                         try {
                             val user = call.receive<User>()
-                            if (user.email?.isNotBlank() == true) {
-                                val existingUser = storage.getUser(user.email)
-                                if (existingUser != null) {
-                                    call.respond(HttpStatusCode.Conflict, existingUser)
-                                    return@post
-                                }
+                            if (user.email?.isNotBlank() == true
+                                    && storage.getUser(user.email) != null) {
+                                call.respond(HttpStatusCode.Conflict, user)
+                                return@post
                             }
-                            val createdUser = storage.createUser(user)
+                            val createdUser = storage.createUser(
+                                    if (user.isEmpty()) {
+                                        val date = LocalDateTime.now()
+                                        User(
+                                                user.id,
+                                                "${date.month.getDisplayName(TextStyle.FULL, Locale.getDefault())}i",
+                                                "${date.nano}-Guest",
+                                                ""
+                                        )
+                                    } else {
+                                        user
+                                    }
+                            )
                             call.respond(HttpStatusCode.OK, createdUser)
                         } catch (e: Exception) {
                             call.respond(HttpStatusCode.InternalServerError, "error while saving user data")
